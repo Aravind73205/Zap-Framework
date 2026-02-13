@@ -1,4 +1,9 @@
 from engine.orchestrator import Orchestrator
+from engine.hooks import HookManager
+
+from extensions.logging_hook import LoggingHook
+from extensions.memory_hook import MemoryHook
+
 from domains.marketing.workflow.marketing_workflow import create_marketing_workflow
 
 from domains.marketing.agents.input_validator_agent import InputValidatorAgent
@@ -15,17 +20,27 @@ def test_marketing_workflow():
     content_outline = ContentOutlineGeneratorAgent()
 
 
-    # Build workflow (only first 2 agents for now)
+    # Build workflow
     steps = create_marketing_workflow(
         input_validator=input_validator,
         audience_analyzer=audience_analyzer,
         value_proposition_agent=value_proposition,       
         content_outline_generator=content_outline,       
     )
+    
+    # create hook for memory
+    hook_manager = HookManager([
+        LoggingHook(),
+        MemoryHook(),
+    ])
 
-    orchestrator = Orchestrator(steps=steps)
+    # Create orchestrator
+    orchestrator = Orchestrator(
+        steps=steps,
+        hook_manager=hook_manager,
+    )
 
-    # Sample user input
+    # sample user input
     initial_input = {
         "payload": {
             "product_description": "AI CRM tool",
@@ -40,6 +55,7 @@ def test_marketing_workflow():
     print("\n=== RESULT ===")
     print("STATUS:", result["status"])
     print("FINAL OUTPUT:", result["final_output"].model_dump_json())
+    
     print("\n=== RECORDS ===")
     for rec in result["rec_history"]:
         print(rec.model_dump_json())

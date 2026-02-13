@@ -46,4 +46,4 @@ class LoggingHook(BaseHook):
         print(f"\n[LOG][ERROR] Agent failed: {agent.name}")
         print("[LOG][ERROR] Error:", str(error))
         print("[LOG][ERROR] Record:")
-        print(record.model_dump_json())
+        print(json.dumps(record.model_dump(), indent=2))

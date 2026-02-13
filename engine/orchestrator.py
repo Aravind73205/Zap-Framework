@@ -81,15 +81,7 @@ class Orchestrator:
 
              #before agent
             if self.hooks:
-                try:
-                    self.hooks.before_agent(agent, step_input)
-                except Exception as e:
-                    return{
-                        "status": "error",
-                        "final_output": None,
-                        "rec_history": rec_history,
-                        "error": str(e),
-                    }
+                self.hooks.before_agent(agent, step_input)
 
             output, record = agent.run(
                 raw_input=step_input,

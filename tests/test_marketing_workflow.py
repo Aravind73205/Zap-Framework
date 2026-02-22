@@ -1,8 +1,8 @@
 from engine.orchestrator import Orchestrator
 from engine.hooks import HookManager
 
-from extensions.logging_hook import LoggingHook
-from extensions.memory_hook import MemoryHook
+from extensions.hooks.logging_hook import LoggingHook
+from extensions.hooks.memory_hook import MemoryHook
 
 from domains.marketing.workflow.marketing_workflow import create_marketing_workflow
 

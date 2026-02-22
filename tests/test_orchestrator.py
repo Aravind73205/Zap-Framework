@@ -5,9 +5,9 @@ from typing import Dict, Any
 
 from engine.orchestrator import Orchestrator, WorkflowStep
 from engine.hooks import HookManager
-from extensions.logging_hook import LoggingHook
-from extensions.memory_hook import MemoryHook
-from extensions.guardrail_hook import GuardrailHook
+from extensions.hooks.logging_hook import LoggingHook
+from extensions.hooks.memory_hook import MemoryHook
+from extensions.hooks.guardrail_hook import GuardrailHook
 from tests.test_agent_base import DummyAgent
 
 

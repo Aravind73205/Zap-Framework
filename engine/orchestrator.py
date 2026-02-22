@@ -82,7 +82,8 @@ class Orchestrator:
              #before agent
             if self.hooks:
                 self.hooks.before_agent(agent, step_input)
-
+            
+            #agent starts running
             output, record = agent.run(
                 raw_input=step_input,
                 context=context,

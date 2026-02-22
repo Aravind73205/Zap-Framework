@@ -1,6 +1,7 @@
 from typing import Dict, Any
 
 from engine.agent_base import BaseAgent, Agentinput, Agentoutput
+from extensions.llm.gemini import GeminiClient
 
 
 class AudienceAnalyzerAgent(BaseAgent):
@@ -11,7 +12,7 @@ class AudienceAnalyzerAgent(BaseAgent):
     This is rule based for now (no LLM yet).
     """
 
-    def __init__(self):
+    def __init__(self, llm=None):
         super().__init__(
             name="marketing.audience_analyzer",   # runtime unique name
             description="Analyzes target audience and extracts insights",
@@ -20,31 +21,33 @@ class AudienceAnalyzerAgent(BaseAgent):
             allowed_tools=[],
         )
 
+        self.llm = llm or GeminiClient()
+
     def execute(self, validated_input: Agentinput, context: Dict[str, Any]) -> Agentoutput:
         payload = validated_input.payload  # output from Input validator Agent.
 
-        target_audience = payload.get("target_audience", "").lower()
+        prompt = f"""
+        You are a marketing strategist,
 
-        # Simple rule based analysis for now 
-        insights = {
+        Analyze the following input and return structured JSON with this format:
+        {{
             "pain_points": [],
             "motivations": [],
-            "tone": "professional"
+            "tone": ""
+        }}
+
+        Product: {payload.get("product_description")}
+        Target audience: {payload.get("target_audience")}
+        Goal: {payload.get("goal")}
+        """
+
+        llm_response = self.llm.generate_json(prompt)
+
+        insights = {
+            "pain_points": llm_response.get("pain_points", []),
+            "motivations": llm_response.get("motivations", []),
+            "tone": llm_response.get("tone", "professional")
         }
-
-        if "founder" in target_audience:
-            insights["pain_points"].append("limited time")
-            insights["motivations"].append("growth and scalability")
-            insights["tone"] = "confident"
-
-        if "student" in target_audience:
-            insights["pain_points"].append("budget constraints")
-            insights["motivations"].append("career growth")
-            insights["tone"] = "encouraging"
-
-        if not insights["pain_points"]:
-            insights["pain_points"].append("general inefficiency")
-            insights["motivations"].append("improved outcomes")
 
         return Agentoutput(
             output={"audience_insights": insights},

@@ -1,18 +1,18 @@
 import json
-from google import genai
 from typing import Dict, Any
 
+from google import genai
 from engine.config import GEMINI_API_KEY
+from extensions.llm.base import BaseLLM
 
 
-class GeminiClient:
-    """Simple wrapper around Gemini for getting JSON responses only."""
+class GeminiClient(BaseLLM):
 
     def __init__(self, model = "gemini-3-flash-preview"):   
         self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.model = model
 
-    def generate_json(self, prompt) -> Dict[str, Any]:
+    def generate_json(self, prompt: str) -> Dict[str, Any]:
         
         # Gemini sometimes ignores "ONLY JSON", so we force it hard
         full_prompt = f"""

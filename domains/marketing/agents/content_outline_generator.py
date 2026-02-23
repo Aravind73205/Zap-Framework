@@ -1,15 +1,16 @@
 from typing import Dict, Any
 
 from engine.agent_base import BaseAgent, Agentinput, Agentoutput
+from extensions.llm.base import BaseLLM
 
 
 class ContentOutlineGeneratorAgent(BaseAgent):
     """
-    Generates a simple marketing content outline
-    based on value proposition.
+    Generates a structured marketing content outline
+    using the value proposition output.
     """
 
-    def __init__(self):
+    def __init__(self, llm: BaseLLM):
         super().__init__(
             name="marketing.content_outline_generator",
             description="Generates structured marketing content outline",
@@ -18,22 +19,48 @@ class ContentOutlineGeneratorAgent(BaseAgent):
             allowed_tools=[],
         )
 
+        self.llm = llm
+
     def execute(self, validated_input: Agentinput, context: Dict[str, Any]) -> Agentoutput:
+
         payload = validated_input.payload
 
-        core_message = payload.get("core_message")
-        key_benefits = payload.get("key_benefits", [])
-        goal = payload.get("goal") or "achieve your goals"
+        prompt = f"""
+        You are a senior SaaS marketing copywriter with 10+ years of experience.
 
-        outline = {
-            "headline": core_message,
-            "introduction": f"Are you struggling to {goal.lower()}?",
-            "benefits_section": key_benefits,
-            "call_to_action": f"Start today and {goal.lower()} with confidence.",
+        Based on the value proposition below, generate a structured
+        marketing content outline.
+
+        Return ONLY valid JSON in this format:
+        {{
+            "headline": "",
+            "introduction": "",
+            "benefits_section": [
+            {{"title": "", "description": ""}},
+            ],
+            "call_to_action": ""
+        }}
+
+        Core Message:
+        {payload.get("core_message")}
+
+        Key Benefits:
+        {payload.get("key_benefits")}
+
+        Goal:
+        {payload.get("goal")}
+        """
+        llm_response = self.llm.generate_json(prompt)
+
+        result = {
+            "headline": llm_response.get("headline", ""),
+            "introduction": llm_response.get("introduction", ""),
+            "benefits_section": llm_response.get("benefits_section", []),
+            "call_to_action": llm_response.get("call_to_action", ""),
         }
 
         return Agentoutput(
-            output={"content_outline": outline},
+            output={"content_outline": result},
             confidence=0.85,
             metadata={"generated_by": self.name},
         )

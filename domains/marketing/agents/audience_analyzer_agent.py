@@ -1,18 +1,16 @@
 from typing import Dict, Any
 
 from engine.agent_base import BaseAgent, Agentinput, Agentoutput
-from extensions.llm.gemini import GeminiClient
+from extensions.llm.base import BaseLLM
 
 
 class AudienceAnalyzerAgent(BaseAgent):
     """
     Analyzes the validated marketing input and extracts
-    structured audience insights.
-
-    This is rule based for now (no LLM yet).
+    structured audience insights using LLM.
     """
 
-    def __init__(self, llm=None):
+    def __init__(self, llm: BaseLLM):
         super().__init__(
             name="marketing.audience_analyzer",   # runtime unique name
             description="Analyzes target audience and extracts insights",
@@ -21,9 +19,10 @@ class AudienceAnalyzerAgent(BaseAgent):
             allowed_tools=[],
         )
 
-        self.llm = llm or GeminiClient()
+        self.llm = llm
 
     def execute(self, validated_input: Agentinput, context: Dict[str, Any]) -> Agentoutput:
+
         payload = validated_input.payload  # output from Input validator Agent.
 
         prompt = f"""

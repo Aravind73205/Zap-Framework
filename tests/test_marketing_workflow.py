@@ -1,31 +1,29 @@
 from engine.orchestrator import Orchestrator
 from engine.hooks import HookManager
 
+from extensions import llm
 from extensions.hooks.logging_hook import LoggingHook
 from extensions.hooks.memory_hook import MemoryHook
 
+from domains.marketing.agent_factory import build_marketing_agents
 from domains.marketing.workflow.marketing_workflow import create_marketing_workflow
-
-from domains.marketing.agents.input_validator_agent import InputValidatorAgent
-from domains.marketing.agents.audience_analyzer_agent import AudienceAnalyzerAgent
-from domains.marketing.agents.value_proposition_agent import ValuePropositionAgent
-from domains.marketing.agents.content_outline_generator import ContentOutlineGeneratorAgent
 
 
 def test_marketing_workflow():
-    # Instantiate agents
-    input_validator = InputValidatorAgent()
-    audience_analyzer = AudienceAnalyzerAgent()
-    value_proposition = ValuePropositionAgent()
-    content_outline = ContentOutlineGeneratorAgent()
 
+    agents = build_marketing_agents()
 
     # Build workflow
+    input_validator = agents["input_validator"]
+    audience_analyzer = agents["audience_analyzer"]
+    value_proposition = agents["value_proposition"]
+    content_outline = agents["content_outline"]
+
     steps = create_marketing_workflow(
         input_validator=input_validator,
         audience_analyzer=audience_analyzer,
-        value_proposition_agent=value_proposition,       
-        content_outline_generator=content_outline,       
+        value_proposition_agent=value_proposition,
+        content_outline_generator=content_outline,
     )
     
     # create hook for memory

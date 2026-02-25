@@ -44,7 +44,7 @@ def test_marketing_workflow():
 
     result = orchestrator.run(initial_input)
 
-    print("\n=== RESULT ===")
+    print("\n RESULT :")
     print("STATUS:", result["status"])
     print("FINAL OUTPUT:", result["final_output"].model_dump_json())
     

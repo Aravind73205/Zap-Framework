@@ -1,4 +1,5 @@
 from extensions.llm.gemini import GeminiClient
+from extensions.llm.retry_wrapper import RetryLLM
 from engine.config import LLM_PROVIDER
 
 from domains.marketing.agents.input_validator_agent import InputValidatorAgent
@@ -10,7 +11,9 @@ from domains.marketing.agents.content_outline_generator import ContentOutlineGen
 def build_marketing_agents():
 
     if LLM_PROVIDER == "gemini":
-        llm = GeminiClient()
+        current_llm = GeminiClient()
+        llm = RetryLLM(current_llm)
+
     else:
         raise ValueError("Unsupported LLM provider")
 

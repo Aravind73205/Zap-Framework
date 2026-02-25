@@ -40,7 +40,7 @@ def main():
 
     result = orchestrator.run(user_input)
 
-    print("\n=== FINAL RESULT ===")
+    print("\n FINAL RESULT :")
     print(result["final_output"].model_dump_json(indent=2))
 
 

@@ -2,6 +2,8 @@ import json
 from typing import Dict, Any
 
 from google import genai
+from google.genai.errors import ClientError
+
 from engine.config import GEMINI_API_KEY, GEMINI_MODEL
 from extensions.llm.base import BaseLLM
 
@@ -25,19 +27,18 @@ class GeminiClient(BaseLLM):
 
         {prompt}
         """
-
+    
         try:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=full_prompt,
             )
-        except Exception as api_error:
-            raise RuntimeError(f"[Gemini API Error] {str(api_error)}")
-        
-
-        text = response.text.strip()       
-
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            raise ValueError(f"[Gemini json Parse Error] Model returned invalid JSON:\n{text}")
+  
+            text = response.text.strip()
+            return json.loads(text)       
+    
+        except ClientError as e:
+            raise RuntimeError(f"Gemini API error: {str(e)}")
+    
+        except Exception as e:
+            raise RuntimeError(f"[Gemini unexpected error]: {str(e)}")

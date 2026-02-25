@@ -1,4 +1,6 @@
 from extensions.llm.gemini import GeminiClient
+from engine.config import LLM_PROVIDER
+
 from domains.marketing.agents.input_validator_agent import InputValidatorAgent
 from domains.marketing.agents.audience_analyzer_agent import AudienceAnalyzerAgent
 from domains.marketing.agents.value_proposition_agent import ValuePropositionAgent
@@ -7,7 +9,10 @@ from domains.marketing.agents.content_outline_generator import ContentOutlineGen
 
 def build_marketing_agents():
 
-    llm = GeminiClient()
+    if LLM_PROVIDER == "gemini":
+        llm = GeminiClient()
+    else:
+        raise ValueError("Unsupported LLM provider")
 
     return {
         "input_validator": InputValidatorAgent(),

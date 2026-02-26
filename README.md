@@ -1,48 +1,86 @@
 # Zap - Multi Agent Orchestration Framework
 
-##   Overview
+## 🎄 Overview
 
-Zap Framework is a modular multi-agent orchestration framework built from scratch to explore clean agent architecture, workflow orchestration, observability, memory persistence, and extensible AI systems.  The framework emphasizes transparency in how agents communicate, execute, and evolve across workflows.
+Zap is a modular multi-agent orchestration framework built from scratch to explore clean architecture for multi-agent AI systems.
 
-It focuses on building clear execution flow and reusable orchestration patterns that make multi-agent pipelines understandable and easy to extend
+The framework focuses on:
+   - Clear execution flow
+   - Strict input/output contracts
+   - LLM provider abstraction
+   - Retry handling via wrappers
+   - Execution hooks
 
-The architecture keeps the orchestration engine lightweight and stable while allowing workflows, agents, and domain logic to be developed independently. This approach enables rapid experimentation, easier debugging, and a clear path toward integrating more advanced AI capabilities without redesigning the core system.
+Zap keeps the orchestration engine minimal while allowing agents, workflows, and LLM providers to evolve independently.
 
 ---
 
-##  🚀 Core Concepts
+##  ⚜️ Core Concepts
 
-- **Agents** → isolated logic units with strict input/output contracts
-- **Orchestrator** → controls execution flow between agents
-- **Workflow Steps** → define agent order and data transformation
-- **Input Transformers (Adapters)** → safely map outputs to next agent inputs
-- **Hooks** → logging, memory saving, guardrails
-- **Memory Store** → persistent workflow history
+- **Agents** → Isolated logic units with strict input/output contracts
+- **Orchestrator** → Controls execution flow between agents
+- **Workflow Steps** → Define agent order and data transformation
+- **Input Transformers** → Safely map outputs to next agent inputs
+- **LLM Abstraction Layer** → Use any language model without changing the code.
+- **Retry Wrapper** → Retry logic for LLM calls
+- **Hooks** → Logging, memory saving, guardrails
+- **Memory Store** → Persistent JSON workflow history
 
 ---
 
 ## 🧠 Architecture Flow
 
 ```
-User Input
-↓
+User Input(CLI)
+    ↓
 Orchestrator
-↓
+    ↓
 Workflow Steps
-↓
-Agents (validate → execute → output)
-↓
-Hooks (logging / memory / guardrails)
-↓
-Memory Store (JSON persistence)
+    ↓
+Agents 
+    ↓
+RetryLLM
+    ↓
+GeminiClient (LLM Provider)
+    ↓
+External API
 ```
+---
+
+## ✅ How To Run
+
+**1. Clone the repository**
+
+   ```
+   git clone https://github.com/Aravind73205/zap-framework.
+   cd zap-framework
+   ```
+
+**2. Install dependencies**
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+**3. Set up environment variables**
+
+- Open `.env` and add your actual key:
+  
+```
+GEMINI_API_KEY = ypur Gemini API Key here
+```
+
+**4. Run the marketing workflow demo**
+  ```
+  python run_marketing.py
+  ```
+
 ---
 
 ## 📂 Project Structure
 
 ```
 Zap-Framework/
-├── app/
 │
 ├── data/
 │   └── memory_store.json
@@ -55,21 +93,28 @@ Zap-Framework/
 │       │   ├── value_proposition_agent.py
 │       │   └── content_outline_generator.py
 │       │
-│       └── workflow/
-│           └── marketing_workflow.py
+│       ├── workflow/
+│       │   └── marketing_workflow.py
+│       │
+│       └── agent_factory.py
 │
 ├── engine/
 │   ├── agent_base.py
 │   ├── orchestrator.py
 │   ├── hooks.py
 │   ├── memory.py
-│   └── guardrails.py
+│   ├── guardrails.py
+│   └── config.py
 │
 ├── extensions/
-│   ├── init.py
-│   ├── logging_hook.py
-│   ├── memory_hook.py
-│   └── guardrail_hook.py
+│   ├── llm/
+│   │   ├── base.py
+│   │   ├── gemini.py
+│   │   └── retry_wrapper.py
+│   ├── hooks
+│       ├── logging_hook.py
+│       ├── memory_hook.py
+│       └── guardrail_hook.py         
 │
 ├── tests/
 │   ├── test_agent_base.py
@@ -77,6 +122,7 @@ Zap-Framework/
 │   ├── test_memory.py
 │   └── test_marketing_workflow.py
 │
+├── run_marketing.py
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -84,56 +130,68 @@ Zap-Framework/
 ```
 ---
 
-##  Current Domain: Marketing Workflow
+##  🧩 LLM Architecture
 
-Phase 1 implements a deterministic marketing content pipeline:
+Zap uses a provider-agnostic LLM design.
 
-1. **Input Validator Agent**  
-   - Cleans and validates user input.
-
-2. **Audience Analyzer Agent**  
-   - Extracts structured audience insights (rule-based).
-
-3. **Value Proposition Agent**  
-   - Builds core message and key benefits.
-
-4. **Content Outline Generator Agent**  
-   - Produces final structured marketing outline.
-     
-
-Each agent output is transformed through workflow adapters before reaching the next agent.
+**BaseLLM** (Contract):
+   ```
+    generate_json(prompt: str) -> Dict[str, Any]
+   ```
+All providers must implement this.
 
 ---
 
-## 🧪 This Executes
+## 🔁 RetryLLM:
 
-Running the workflow executes:
+RetryLLM wraps any BaseLLM implementation.
 
-- orchestration pipeline  
-- hooks lifecycle  
-- memory persistence  
-- structured execution records  
+Responsibilities:
+
+   - Retry failed LLM calls
+   - Log retry attempts
+   - Raise final error if all retries fail
+
+Agents never know retry logic exists.
+GeminiClient never knows retry logic exists.
+
+This separation follows the decorator pattern.
 
 ---
 
-## 🔎 Hooks System
+## 🏭 Agent Factory
+
+Agents are constructed via `agent_factory.py.`
+
+Responsibilities:
+
+   - Instantiate LLM provider
+   - Wrap provider with RetryLLM
+   - Inject LLM into LLM-based agents
+   - Keep agents provider-agnostic
+
+This prevents tight coupling between agents and specific LLM implementations.
+
+---
+
+## 🔖 Hooks System
 
 Hooks extend behavior without touching engine logic.
 
-### Available Hooks:
-
 #### 1) LoggingHook
-- prints workflow lifecycle
-- shows inputs & outputs
+- Logs workflow lifecycle
+- Displays agent inputs and outputs
+- Shows status and duration
 
 #### 2) MemoryHook
-- saves runs into JSON storage
+- Persists agent execution records
+- Saves structured data to `data/memory_store.json`
 
 #### 3) GuardrailHook
-- limits workflow steps
-- validates required input keys
-- blocks restricted agents
-
+- Validates required inputs
+- Limits workflow steps
+- Blocks restricted agents
+- Raises `GuardrailViolation` to stop execution safely
 
 Hooks are optional and fully pluggable.
 
@@ -141,17 +199,51 @@ Hooks are optional and fully pluggable.
 
 ## 💾 Memory Persistence
 
-Workflow runs are saved to: ( data/memory_store.json )
+All agent runs are stored in:
 
-Each run stores:
+   `data/memory_store.json`
 
-- agent inputs
-- outputs
-- timestamps
-- status
-- metadata
+Each record includes:
 
-This enables debugging and future learning-based improvements.
+   - run_id
+   - agent_name
+   - input
+   - output
+   - status
+   - error (if any)
+   - duration
+   - metadata
+
+This enables:
+
+   - Debugging
+   - Auditing
+   - Future learning systems
+   - Replay capability
+     
+---
+
+## ♾️ Current Domain: Marketing Workflow
+
+Implemented agents:
+
+   1) Input Validator (rule-based)
+   2) Audience Analyzer (LLM-based)
+   3) Value Proposition Generator (LLM-based)
+   4) Content Outline Generator (LLM-based)
+
+Workflow is deterministic in structure but hybrid in intelligence.
+
+---
+
+## 🔮 Upcoming Enhancements
+
+Zap is designed to evolve toward production-grade multi-agent orchestration. Planned upgrades include:
+
+   1) Async Orchestrator - eliminate idle network wait time   
+   2) Parallel Agent Execution - reduce overall latency      
+   3) Token & Cost Tracking - for cost transparency      
+   4) Streaming Support - improve user experience for long running agent tasks
 
 ---
 
@@ -161,46 +253,17 @@ This enables debugging and future learning-based improvements.
 - Separate domain logic from core framework
 - Allow plug-and-play agents
 - Strong observability and debugging
-- Easy evolution toward LLM-based agents
 
 ---
 
-## 📈 Current Status
+## 🧠 Design Philosophy
 
-### ✅ Phase 1 — Deterministic Engine (Completed)
+Zap is built to understand and control:
 
-- Agent lifecycle system
-- Orchestrator with workflow steps
-- Adapter-based data passing
-- Hook manager
-- Guardrails
-- Memory persistence
-- Marketing domain workflow
+   - How agents communicate
+   - How workflows execute
+   - Where failures occur
+   - How retry logic behaves
+   - How memory evolves over time
 
----
-
-## 🔜 Next Phase
-
-Phase 2 introduces hybrid AI behavior:
-
-- LLM-powered agents
-- Hybrid deterministic + intelligent workflows
-- Improved context handling
-- Stronger error recovery
-
----
-
-## ⚡ Why This Exists
-
-Most frameworks hide orchestration internals.
-
-Zap Framework is built to understand and control:
-
-- how agents communicate
-- how workflows execute
-- where failures happen
-- how memory evolves
-
-The goal is not just using AI tools — but understanding how multi-agent systems actually work under the hood.
-
----
+The goal is not just to use AI APIs — but to understand how multi-agent systems function under the hood.
